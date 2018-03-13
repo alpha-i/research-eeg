@@ -16,6 +16,7 @@ N_EPOCHS = 128
 N_SENSORS = 16
 N_TIMESTEPS = 20
 DATA_LENGTH = N_TIMESTEPS * N_SENSORS
+PRINT_EPOCH_INTERVAL = 10
 
 
 def xavier_init(size):
@@ -30,17 +31,13 @@ normal_test_batch = load_normal_test_batch(feature_length=DATA_LENGTH)
 abnormal_test_batch = load_abnormal_test_batch(feature_length=DATA_LENGTH)
 
 X = tf.placeholder(tf.float32, shape=[None, DATA_LENGTH])
+Z = tf.placeholder(tf.float32, shape=[None, 100])
 
 D_W1 = tf.Variable(xavier_init([DATA_LENGTH, 128]))
 D_b1 = tf.Variable(tf.zeros(shape=[128]))
-
 D_W2 = tf.Variable(xavier_init([128, 1]))
 D_b2 = tf.Variable(tf.zeros(shape=[1]))
-
 theta_D = [D_W1, D_W2, D_b1, D_b2]
-
-
-Z = tf.placeholder(tf.float32, shape=[None, 100])
 
 G_W1 = tf.Variable(xavier_init([100, 128]))
 G_b1 = tf.Variable(tf.zeros(shape=[128]))
@@ -103,6 +100,10 @@ D_fake, D_logit_fake = discriminator(G_sample)
 # -------------------
 D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.ones_like(D_logit_real)))
 D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
+
+# Use this for testing known anomalous data
+D_loss_preictal = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.zeros_like(D_logit_real)))
+
 D_loss = D_loss_real + D_loss_fake
 G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
 
@@ -124,7 +125,7 @@ for epoch in range(N_EPOCHS):
 
     start_time = timer()
 
-    if epoch % 10 == 0:
+    if epoch % PRINT_EPOCH_INTERVAL == 0:
         samples = sess.run(G_sample, feed_dict={Z: sample_Z(16, Z_dim)})
 
         fig = plot(samples)
@@ -151,21 +152,23 @@ for epoch in range(N_EPOCHS):
         _, D_loss_curr = sess.run([D_solver, D_loss], feed_dict={X: batch_data.features, Z: sample_Z(batch_size, Z_dim)})
         _, G_loss_curr = sess.run([G_solver, G_loss], feed_dict={Z: sample_Z(batch_size, Z_dim)})
 
-    if epoch % 10 == 0:
+    if epoch % PRINT_EPOCH_INTERVAL == 0:
         # See how the D performs against the test samples
 
-        D_test_loss = sess.run([D_loss_real], feed_dict={X: normal_test_batch})
-        D_preictal_loss = sess.run([D_loss_fake], feed_dict={X: abnormal_test_batch})
+        time_epoch = timer() - start_time
+
+        D_test_loss = sess.run(D_loss_real, feed_dict={X: normal_test_batch})
+        D_preictal_loss = sess.run(D_loss_preictal, feed_dict={X: abnormal_test_batch})
+
+        msg = "Epoch {} of {} ...  in {:.2f} seconds."
+        logging.info(msg.format(epoch + 1, N_EPOCHS, time_epoch))
+        logging.info('Iter: {}'.format(it))
+        logging.info('G loss: {:.4}'.format(G_loss_curr))
+        logging.info('D train loss: {:.4}'.format(D_loss_curr))
+        logging.info('D test loss: {:.4}'.format(D_test_loss))
+        logging.info('D seizure test loss: {:.4}'.format(D_preictal_loss))
 
 
-        print('Iter: {}'.format(it))
-        print('D loss: {:.4}'. format(D_loss_curr))
-        print('G_loss: {:.4}'.format(G_loss_curr))
-        print('D test loss: {:.4}'. format(D_test_loss))
-        print('D seizure loss: {:.4}'. format(D_preictal_loss))
-        print()
-
-    time_epoch = timer() - start_time
 
 
 # Finally let's see how well the discriminator performs on a) more normal data (b) weird data and (c) generated data
