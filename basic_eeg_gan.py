@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 N_EPOCHS = 128
 N_SENSORS = 16
-N_TIMESTEPS = 20
+N_TIMESTEPS = 64
 DATA_LENGTH = N_TIMESTEPS * N_SENSORS
 PRINT_EPOCH_INTERVAL = 10
 
@@ -159,6 +159,7 @@ for epoch in range(N_EPOCHS):
 
         D_test_loss = sess.run(D_loss_real, feed_dict={X: normal_test_batch})
         D_preictal_loss = sess.run(D_loss_preictal, feed_dict={X: abnormal_test_batch})
+        D_false_preictal_loss = sess.run(D_loss_real, feed_dict={X: abnormal_test_batch})
 
         msg = "Epoch {} of {} ...  in {:.2f} seconds."
         logging.info(msg.format(epoch + 1, N_EPOCHS, time_epoch))
@@ -166,6 +167,7 @@ for epoch in range(N_EPOCHS):
         logging.info('G loss: {:.4}'.format(G_loss_curr))
         logging.info('D train loss: {:.4}'.format(D_loss_curr))
         logging.info('D test loss: {:.4}'.format(D_test_loss))
+        logging.info('D false negative test loss: {:.4}'.format(D_false_preictal_loss))
         logging.info('D seizure test loss: {:.4}'.format(D_preictal_loss))
 
 
@@ -173,6 +175,13 @@ for epoch in range(N_EPOCHS):
 
 # Finally let's see how well the discriminator performs on a) more normal data (b) weird data and (c) generated data
 
+    # INFO:root:Epoch 121 of 128 ...  in 6.21 seconds.
+    # INFO:root:Iter: 226512
+    # INFO:root:G loss: 1.016
+    # INFO:root:D train loss: 1.235
+    # INFO:root:D test loss: 0.6048
+    # INFO:root:D false negative test loss: 0.7878
+    # INFO:root:D seizure test loss: 1.287
 
 # for it in range(1000000):
 #     if it % 1000 == 0:
