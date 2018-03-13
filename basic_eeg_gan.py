@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from matlab_data import make_eeg_data_provider
+from matlab_data import make_eeg_data_provider, load_normal_test_batch, load_abnormal_test_batch
 
 logger = logging.getLogger('tipper')
 logger.addHandler(logging.StreamHandler())
@@ -25,6 +25,9 @@ def xavier_init(size):
 
 
 data_provider = make_eeg_data_provider(feature_length=DATA_LENGTH)
+
+normal_test_batch = load_normal_test_batch(feature_length=DATA_LENGTH)
+abnormal_test_batch = load_abnormal_test_batch(feature_length=DATA_LENGTH)
 
 X = tf.placeholder(tf.float32, shape=[None, DATA_LENGTH])
 
@@ -56,8 +59,9 @@ def generator(z):
     G_h1 = tf.nn.relu(tf.matmul(z, G_W1) + G_b1)
     G_log_prob = tf.matmul(G_h1, G_W2) + G_b2
     G_prob = tf.nn.sigmoid(G_log_prob)
+    G_signal = (G_prob - 0.5) * 2
 
-    return G_prob
+    return G_signal
 
 
 def discriminator(x):
@@ -79,7 +83,11 @@ def plot(samples):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
-        plt.plot(sample.reshape(N_SENSORS, N_TIMESTEPS))
+        sample_data = sample.reshape(N_SENSORS, N_TIMESTEPS)
+        for i in range(N_SENSORS):  # Vertical offsets for visual clarity
+            sample_data[i, :] += i * 1.5
+
+        plt.plot(np.transpose(sample_data))
 
     return fig
 
@@ -120,6 +128,7 @@ for epoch in range(N_EPOCHS):
         samples = sess.run(G_sample, feed_dict={Z: sample_Z(16, Z_dim)})
 
         fig = plot(samples)
+
         plt.savefig('out/{}.png'.format(str(i).zfill(3)), bbox_inches='tight')
         i += 1
         plt.close(fig)
@@ -143,17 +152,23 @@ for epoch in range(N_EPOCHS):
         _, G_loss_curr = sess.run([G_solver, G_loss], feed_dict={Z: sample_Z(batch_size, Z_dim)})
 
     if epoch % 10 == 0:
+        # See how the D performs against the test samples
+
+        D_test_loss = sess.run([D_loss_real], feed_dict={X: normal_test_batch})
+        D_preictal_loss = sess.run([D_loss_fake], feed_dict={X: abnormal_test_batch})
+
+
         print('Iter: {}'.format(it))
         print('D loss: {:.4}'. format(D_loss_curr))
         print('G_loss: {:.4}'.format(G_loss_curr))
+        print('D test loss: {:.4}'. format(D_test_loss))
+        print('D seizure loss: {:.4}'. format(D_preictal_loss))
         print()
 
     time_epoch = timer() - start_time
 
 
-# Now see how well the discriminator performs on the weird data
-
-
+# Finally let's see how well the discriminator performs on a) more normal data (b) weird data and (c) generated data
 
 
 # for it in range(1000000):
