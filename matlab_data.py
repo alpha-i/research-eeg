@@ -1,9 +1,12 @@
+import os
 import scipy.io as spio
 import numpy as np
 
 from providers import TrainDataProvider
 
-DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
+FILENAME_PREFIX = os.environ.get('FILENAME_PREFIX')
+DATA_FOLDER = os.environ.get('DATA_FOLDER')
+
 MATLAB_EXTENSION = '.mat'
 N_TRAIN_SEGMENTS = 100
 N_TEST_SEGMENTS = 1
@@ -82,6 +85,7 @@ def _trim_segment(segment_data, feature_length):
 
     return segment_data[:, 0:max_index]
 
+
 def load_segment(segment_number, abnormal=False):
     """
 
@@ -114,5 +118,6 @@ def load_filename(segment_number=1, abnormal=False):
 
     segment_string = str(segment_number).zfill(4)
     regime = 'preictal' if abnormal else 'interictal'
-    filename = DATA_PATH + 'Dog_1_' + regime + '_segment_' + segment_string + MATLAB_EXTENSION
-    return filename
+    filename = "{}_{}_segment_{}.mat".format(FILENAME_PREFIX, regime, segment_string)
+
+    return os.path.join(DATA_FOLDER, filename)

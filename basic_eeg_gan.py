@@ -1,6 +1,7 @@
-import logging
+import os
 from timeit import default_timer as timer
 
+import logging
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +12,8 @@ from matlab_data import make_eeg_data_provider, load_normal_test_batch, load_abn
 logger = logging.getLogger('tipper')
 logger.addHandler(logging.StreamHandler())
 logging.basicConfig(level=logging.DEBUG)
+
+OUTPUT_DIR = os.environ.get('OUTPUT_DIR')
 
 N_EPOCHS = 128
 N_SENSORS = 16
@@ -129,8 +132,12 @@ for epoch in range(N_EPOCHS):
         samples = sess.run(G_sample, feed_dict={Z: sample_Z(16, Z_dim)})
 
         fig = plot(samples)
+        figure_filename = os.path.join(
+            OUTPUT_DIR,
+            '{}.png'.format(str(i).zfill(3))
+        )
 
-        plt.savefig('out/{}.png'.format(str(i).zfill(3)), bbox_inches='tight')
+        plt.savefig(figure_filename, bbox_inches='tight')
         i += 1
         plt.close(fig)
 
