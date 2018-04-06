@@ -50,3 +50,15 @@ $ export OUTPUT_DIR=/path/to/out/dir #the folder where the figures will be saved
 $ python basic_eeg_gaan.py
 ```
 
+Convert data to hdf5
+--------------------
+
+```bash
+$ python convert_to_hd5.py input_directory subject_name destination_file
+```
+where
+* `input_directory`: is the directory where files are located
+* `subject_name`: is the filename prefix (es: Dog_1)
+* `destination_file`: is the fullpath of the hd5 output file
+
+
