@@ -4,7 +4,7 @@ from svm import ScikitSvm
 
 import matlab_data as data
 
-DEFAULT_METHOD = 'SVM'
+DEFAULT_METHOD = 'SVM'  # options: SVM, gan, ; to be implemented:
 DEFAULT_FEATURE_LENGTH = 100
 
 
@@ -17,14 +17,18 @@ def run_eeg_performance_benchmark(method=DEFAULT_METHOD, feature_length=DEFAULT_
 
     detector = load_detector(method, feature_length)
 
+    print('Loading training data')
     brainwave_segments = data.load_training_segments(feature_length)
-    training_data = data.process_segment_list(brainwave_segments, feature_length)
 
-    normal_test_batch = data.load_normal_test_batch(feature_length=feature_length)
-    abnormal_test_batch = data.load_abnormal_test_batch(feature_length=feature_length)
+    print('Processing training data')
+    training_data = data.process_segment_list(brainwave_segments, feature_length)
 
     print('Initiating training')
     detector.train(training_data)
+
+    print('Loading test data')
+    normal_test_batch = data.load_normal_test_batch(feature_length=feature_length)
+    abnormal_test_batch = data.load_abnormal_test_batch(feature_length=feature_length)
 
     print('Assessing test data')
     prediction_normal = detector.predict(normal_test_batch)

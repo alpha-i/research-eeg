@@ -1,12 +1,16 @@
 import scipy.io as spio
 import numpy as np
+import platform
 
 from providers import TrainDataProvider
 
-DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
+if platform.system() == 'Darwin':
+    DATA_PATH = '/Users/fergus/Kaggle/EEG/Dog_1/'
+else:
+    DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
 MATLAB_EXTENSION = '.mat'
 N_TRAIN_SEGMENTS = 100
-N_TEST_SEGMENTS = 1
+N_TEST_SEGMENTS = 24
 N_SENSORS = 16
 
 
@@ -29,10 +33,13 @@ def process_segment_list(segment_list, feature_length):
     """ Prepare list of large data samples for entry into network. """
 
     full_data = np.stack(segment_list)
+    print('stacked')
 
     # Normalise data
     full_data = full_data - np.mean(full_data.flatten())
+    print('meaned')
     full_data = full_data / np.std(full_data.flatten())
+    print('normed')
 
     return np.reshape(full_data, (-1, feature_length))
 
@@ -81,6 +88,7 @@ def _trim_segment(segment_data, feature_length):
     max_index = n_features * feature_length
 
     return segment_data[:, 0:max_index]
+
 
 def load_segment(segment_number, abnormal=False):
     """

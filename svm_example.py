@@ -1,5 +1,7 @@
 # Demo of anomaly detection where there are no previously known anomalies.
 
+import matplotlib
+matplotlib.use('TkAgg')  # weird hack to fix osx issue
 
 import numpy as np
 import matplotlib.pyplot as plt
