@@ -31,8 +31,8 @@ Running instruction
 
 ### Installation
 ```bash
-$ conda create -n egg python=3.5 numpy
-$ source activate egg
+$ conda create -n eeg python=3.5 numpy
+$ source activate eeg
 $ pip install -r requirements.txt
 ```
 

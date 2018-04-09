@@ -1,4 +1,4 @@
---extra-index-url https://pypi.fury.io/reW6hdjFCrSbpo3ehrBu/alpha-i/
+--extra-index-url https://repo.fury.io/zNzsk7gQsYY335HLzW9x/alpha-i/
 
 alphai-data-sources==1.0.1
 alphai-finance==2.0.1
