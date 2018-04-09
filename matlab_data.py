@@ -10,7 +10,7 @@ else:
     DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
 MATLAB_EXTENSION = '.mat'
 N_TRAIN_SEGMENTS = 100
-N_TEST_SEGMENTS = 24
+N_TEST_SEGMENTS = 1
 N_SENSORS = 16
 
 
@@ -88,7 +88,6 @@ def _trim_segment(segment_data, feature_length):
     max_index = n_features * feature_length
 
     return segment_data[:, 0:max_index]
-
 
 def load_segment(segment_number, abnormal=False):
     """
