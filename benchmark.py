@@ -58,9 +58,11 @@ def make_performance_summary(prediction_normal, prediction_abnormal):
 
     fraction_false_pos = prediction_normal[prediction_normal != -1].size / n_norm
     fraction_false_neg = prediction_abnormal[prediction_abnormal == -1].size / n_abnorm
+    score = ((1 - fraction_false_pos) + (1 - fraction_false_neg) - 1) / 2  # Above-random performance for a single subsegment
 
     print("False positive rate:", fraction_false_pos)
-    print("False negative rate", fraction_false_neg)
+    print("False negative rate:", fraction_false_neg)
+    print("Score:", score)
 
 
 
