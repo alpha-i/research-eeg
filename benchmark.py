@@ -5,7 +5,7 @@ from sklearn.metrics import roc_auc_score
 
 import matlab_data as data
 
-DEFAULT_METHOD = 'SVM'  # options: SVM, gan, ; to be implemented:
+DEFAULT_METHOD = 'SVM'
 DEFAULT_FEATURE_LENGTH = 128
 N_TEST_SEGMENTS = 20
 DO_FFT = False

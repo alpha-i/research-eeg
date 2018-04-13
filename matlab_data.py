@@ -13,7 +13,7 @@ N_TRAIN_SEGMENTS = 100
 N_SENSORS = 16
 
 
-def make_eeg_data_provider(feature_length=100, batch_size=200):
+def make_eeg_data_provider(feature_length=100, batch_size=200, do_fft=False):
     """ Creates trainng data of dimension [samples, series, feature_length]
 
     :param feature_length:
@@ -22,7 +22,7 @@ def make_eeg_data_provider(feature_length=100, batch_size=200):
     """
     all_segments = load_training_segments(feature_length)
 
-    train_x = process_segment_list(all_segments, feature_length)
+    train_x = process_segment_list(all_segments, feature_length, do_fft)
     train_y = None
 
     return TrainDataProvider(train_x, train_y, batch_size)

@@ -4,12 +4,14 @@ from timeit import default_timer as timer
 import logging
 import tensorflow as tf
 import numpy as np
+from sklearn.metrics import roc_auc_score
 import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from matlab_data import make_eeg_data_provider, load_normal_test_batch, load_abnormal_test_batch
+
+from matlab_data import make_eeg_data_provider, load_normal_test_segment, load_abnormal_test_segment
 
 logger = logging.getLogger('tipper')
 logger.addHandler(logging.StreamHandler())
@@ -20,9 +22,10 @@ OUTPUT_DIR = './outputs/'
 N_EPOCHS = 128
 N_SENSORS = 16
 N_TIMESTEPS = 64
+N_TEST_SEGMENTS = 20
 DATA_LENGTH = N_TIMESTEPS * N_SENSORS
 PRINT_EPOCH_INTERVAL = 10
-
+DO_FFT = False
 
 def xavier_init(size):
     in_dim = size[0]
@@ -31,9 +34,6 @@ def xavier_init(size):
 
 
 data_provider = make_eeg_data_provider(feature_length=DATA_LENGTH)
-
-normal_test_batch = load_normal_test_batch(feature_length=DATA_LENGTH)
-abnormal_test_batch = load_abnormal_test_batch(feature_length=DATA_LENGTH)
 
 X = tf.placeholder(tf.float32, shape=[None, DATA_LENGTH])
 Z = tf.placeholder(tf.float32, shape=[None, 100])
@@ -165,19 +165,39 @@ for epoch in range(N_EPOCHS):
         # See how the D performs against the test samples
 
         time_epoch = timer() - start_time
+        mean_detector_normal = np.zeros(N_TEST_SEGMENTS)
+        mean_detector_abnormal = np.zeros(N_TEST_SEGMENTS)
 
-        D_test_loss = sess.run(D_loss_real, feed_dict={X: normal_test_batch})
-        D_preictal_loss = sess.run(D_loss_preictal, feed_dict={X: abnormal_test_batch})
-        D_false_preictal_loss = sess.run(D_loss_real, feed_dict={X: abnormal_test_batch})
+        for i in range(N_TEST_SEGMENTS):
+            print('Loading test data', i + 1, 'of', N_TEST_SEGMENTS)
+            normal_test_batch = load_normal_test_segment(DO_FFT, feature_length=DATA_LENGTH, segment_number=i)
+            abnormal_test_batch = load_abnormal_test_segment(DO_FFT, feature_length=DATA_LENGTH, segment_number=i)
 
-        msg = "Epoch {} of {} ...  in {:.2f} seconds."
-        logging.info(msg.format(epoch + 1, N_EPOCHS, time_epoch))
-        logging.info('Iter: {}'.format(it))
-        logging.info('G loss: {:.4}'.format(G_loss_curr))
-        logging.info('D train loss: {:.4}'.format(D_loss_curr))
-        logging.info('D test loss: {:.4}'.format(D_test_loss))
-        logging.info('D false negative test loss: {:.4}'.format(D_false_preictal_loss))
-        logging.info('D seizure test loss: {:.4}'.format(D_preictal_loss))
+            print('Assessing test data')
+            D_test_loss = sess.run(D_loss_real, feed_dict={X: normal_test_batch})
+            D_preictal_loss = sess.run(D_loss_preictal, feed_dict={X: abnormal_test_batch})
+            D_false_preictal_loss = sess.run(D_loss_real, feed_dict={X: abnormal_test_batch})
+
+            msg = "Epoch {} of {} ...  in {:.2f} seconds."
+            logging.info(msg.format(epoch + 1, N_EPOCHS, time_epoch))
+            logging.info('Iter: {}'.format(it))
+            logging.info('G loss: {:.4}'.format(G_loss_curr))
+            logging.info('D train loss: {:.4}'.format(D_loss_curr))
+            logging.info('D test loss: {:.4}'.format(D_test_loss))
+            logging.info('D false negative test loss: {:.4}'.format(D_false_preictal_loss))
+            logging.info('D seizure test loss: {:.4}'.format(D_preictal_loss))
+
+            detector_output_abnormal = sess.run(D_real, feed_dict={X: abnormal_test_batch})
+            detector_output_normal = sess.run(D_real, feed_dict={X: normal_test_batch})
+            mean_detector_normal[i] = np.mean(detector_output_normal)
+            mean_detector_abnormal[i] = np.mean(detector_output_abnormal)
+
+        n_normal = len(mean_detector_normal)
+        combined_scores = np.stack((mean_detector_normal, mean_detector_abnormal)).flatten()
+        truth = np.zeros(len(combined_scores))
+        truth[0:n_normal] = 1
+        roc_score = roc_auc_score(truth, combined_scores)
+        print("ROC Score:", roc_score)  #
 
 
 

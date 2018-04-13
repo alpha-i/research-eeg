@@ -48,3 +48,4 @@ class ScikitSvm:
 
         return train_data[np.random.choice(train_data.shape[0], MAX_N_SAMPLES, replace=False)]
 
+
