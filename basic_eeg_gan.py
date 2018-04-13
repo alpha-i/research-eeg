@@ -4,6 +4,8 @@ from timeit import default_timer as timer
 import logging
 import tensorflow as tf
 import numpy as np
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -13,7 +15,7 @@ logger = logging.getLogger('tipper')
 logger.addHandler(logging.StreamHandler())
 logging.basicConfig(level=logging.DEBUG)
 
-OUTPUT_DIR = os.environ.get('OUTPUT_DIR')
+OUTPUT_DIR = './outputs/'
 
 N_EPOCHS = 128
 N_SENSORS = 16

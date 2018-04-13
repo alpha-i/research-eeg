@@ -10,7 +10,6 @@ else:
     DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
 MATLAB_EXTENSION = '.mat'
 N_TRAIN_SEGMENTS = 100
-N_TEST_SEGMENTS = 1
 N_SENSORS = 16
 
 
@@ -29,11 +28,23 @@ def make_eeg_data_provider(feature_length=100, batch_size=200):
     return TrainDataProvider(train_x, train_y, batch_size)
 
 
-def process_segment_list(segment_list, feature_length):
+def process_segment_list(segment_list, feature_length, do_fft):
     """ Prepare list of large data samples for entry into network. """
+
+    n_segments = len(segment_list)
 
     full_data = np.stack(segment_list)
     print('stacked')
+
+    n_sensors = full_data.shape[1]
+
+    full_data = np.reshape(full_data, (n_segments, n_sensors, -1, feature_length))
+    print('reshaped')
+
+    if do_fft:
+        full_data =  np.abs(np.fft.fft(full_data, axis=-1)) ** 2 / feature_length
+        #    full_data = full_data[:,:,:,1:] # Remove DC mode ?
+        print('fft done')
 
     # Normalise data
     full_data = full_data - np.mean(full_data.flatten())
@@ -44,28 +55,27 @@ def process_segment_list(segment_list, feature_length):
     return np.reshape(full_data, (-1, feature_length))
 
 
-def load_abnormal_test_batch(feature_length):
+def load_abnormal_test_segment(do_fft, feature_length, segment_number=1):
 
     sensory_list = []
-    for i in range(N_TEST_SEGMENTS):
-        index = i + 1
-        segment_data = load_segment(index, abnormal=True)
-        segment_data = _trim_segment(segment_data, feature_length)
-        sensory_list.append(segment_data)
 
-    return process_segment_list(sensory_list, feature_length)
+    index = segment_number + 1
+    segment_data = load_segment(index, abnormal=True)
+    segment_data = _trim_segment(segment_data, feature_length)
+    sensory_list.append(segment_data)
+
+    return process_segment_list(sensory_list, feature_length, do_fft)
 
 
-def load_normal_test_batch(feature_length):
+def load_normal_test_segment(do_fft, feature_length, segment_number=1):
 
     sensory_list = []
-    for i in range(N_TEST_SEGMENTS):
-        index = i + N_TRAIN_SEGMENTS
-        segment_data = load_segment(index)
-        segment_data = _trim_segment(segment_data, feature_length)
-        sensory_list.append(segment_data)
+    index = segment_number + N_TRAIN_SEGMENTS
+    segment_data = load_segment(index, abnormal=False)
+    segment_data = _trim_segment(segment_data, feature_length)
+    sensory_list.append(segment_data)
 
-    return process_segment_list(sensory_list, feature_length)
+    return process_segment_list(sensory_list, feature_length, do_fft)
 
 
 def load_training_segments(feature_length):
