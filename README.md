@@ -9,7 +9,7 @@ Data description:
 
 Intracranial EEG (iEEG) data clips are organized in folders containing training and testing data for each human or canine subject.
 
-The training data is organized into ten minute EEG clips labeled "Preictal" for pre-seizure data segments, or "Interictal" for non-seizure data segments. Training data segments are numbered sequentially, while testing data are in random order. 
+The training data is organized into ten minute EEG clips labeled "Preictal" for pre-seizure data segments, or "Interictal" for non-seizure data segments. Training data segments are numbered sequentially, while testing data are in random order.
 
 Within folders data segments are stored in .mat files as follow:
 
@@ -33,6 +33,7 @@ Running instruction
 ```bash
 $ conda create -n eeg python=3.5 numpy
 $ source activate eeg
+$ pip install -U setuptools --ignore-installed --no-cache-dir
 $ pip install -r requirements.txt
 ```
 
@@ -60,5 +61,3 @@ where
 * `input_directory`: is the directory where files are located
 * `subject_name`: is the filename prefix (es: Dog_1)
 * `destination_file`: is the fullpath of the hd5 output file
-
-
