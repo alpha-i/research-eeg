@@ -9,7 +9,7 @@ if platform.system() == 'Darwin':
 else:
     DATA_PATH = '/mnt/pika/Kaggle/Data/EEG/Dog_1/'
 MATLAB_EXTENSION = '.mat'
-N_TRAIN_SEGMENTS = 100
+N_TRAIN_SEGMENTS = 200
 N_SENSORS = 16
 
 

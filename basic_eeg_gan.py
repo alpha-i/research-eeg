@@ -24,8 +24,10 @@ N_SENSORS = 16
 N_TIMESTEPS = 64
 N_TEST_SEGMENTS = 20
 DATA_LENGTH = N_TIMESTEPS * N_SENSORS
-PRINT_EPOCH_INTERVAL = 10
+PLOT_EPOCH_INTERVAL = 1000 # save plots after x epochs
+TEST_EPOCH_INTERVAL = 10 # print diagnostics after x epochs
 DO_FFT = False
+PLOT_ASPECT = N_TIMESTEPS / 20
 
 def xavier_init(size):
     in_dim = size[0]
@@ -61,7 +63,7 @@ def generator(z):
     G_h1 = tf.nn.relu(tf.matmul(z, G_W1) + G_b1)
     G_log_prob = tf.matmul(G_h1, G_W2) + G_b2
     G_prob = tf.nn.sigmoid(G_log_prob)
-    G_signal = (G_prob - 0.5) * 2
+    G_signal = (G_prob - 0.5) * 2 * np.sqrt(2)  # Sigmoid gives outputs in range 0<y<1 so need to rescale
 
     return G_signal
 
@@ -74,8 +76,8 @@ def discriminator(x):
     return D_prob, D_logit
 
 
-def plot(samples):
-    fig = plt.figure(figsize=(4, 4))
+def plot_samples(samples):
+    fig = plt.figure(figsize=(8, 8))
     gs = gridspec.GridSpec(4, 4)
     gs.update(wspace=0.05, hspace=0.05)
 
@@ -84,10 +86,10 @@ def plot(samples):
         plt.axis('off')
         ax.set_xticklabels([])
         ax.set_yticklabels([])
-        ax.set_aspect('equal')
+        ax.set_aspect(PLOT_ASPECT)
         sample_data = sample.reshape(N_SENSORS, N_TIMESTEPS)
         for i in range(N_SENSORS):  # Vertical offsets for visual clarity
-            sample_data[i, :] += i * 1.5
+            sample_data[i, :] += i * 3
 
         plt.plot(np.transpose(sample_data))
 
@@ -161,7 +163,7 @@ for epoch in range(N_EPOCHS):
         _, D_loss_curr = sess.run([D_solver, D_loss], feed_dict={X: batch_data.features, Z: sample_Z(batch_size, Z_dim)})
         _, G_loss_curr = sess.run([G_solver, G_loss], feed_dict={Z: sample_Z(batch_size, Z_dim)})
 
-    if epoch % PRINT_EPOCH_INTERVAL == 0:
+    if epoch % TEST_EPOCH_INTERVAL == 0:
         # See how the D performs against the test samples
 
         time_epoch = timer() - start_time
